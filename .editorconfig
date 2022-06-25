@@ -1,0 +1,13 @@
+root = true
+
+[*]
+end_of_line = clrf
+insert_final_newline = true
+
+[*.rs]
+indent_style = tab
+indent_size = 4
+
+[*.toml]
+indent_style = space
+indent_size = 2
