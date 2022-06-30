@@ -1,0 +1,27 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+    
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install deps
+      run: npm install --location=global wasm-pack
+    - name: Install WASM Runtime
+      run: rustup install wasm32-unknown-unknown
+    - name: Check for WASM compatability
+      run: cargo check --target wasm32-unknown-unknown
+    - name: Check pt. 2
+      run: wasm-pack test -r --firefox --headless
+    
