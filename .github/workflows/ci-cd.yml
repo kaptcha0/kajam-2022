@@ -1,4 +1,4 @@
-name: Rust
+name: CI/CD
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
     - name: Install deps
       run: npm install --location=global wasm-pack
     - name: Install WASM Runtime
-      run: rustup install wasm32-unknown-unknown
+      run: rustup target add wasm32-unknown-unknown
     - name: Check for WASM compatability
       run: cargo check --target wasm32-unknown-unknown
     - name: Check pt. 2
