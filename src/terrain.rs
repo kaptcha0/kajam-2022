@@ -71,7 +71,7 @@ fn generate_terrain(mut commands: Commands, mut terrain: ResMut<Terrain>) {
             .insert(
                 CollisionLayers::none()
                     .with_group(Layers::Level)
-                    .with_masks(&[Layers::Player, Layers::Enemy]),
+                    .with_masks(&[Layers::Player, Layers::Enemy, Layers::Fireball]),
             )
             .id();
 

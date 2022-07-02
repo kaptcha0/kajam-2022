@@ -30,6 +30,7 @@ pub fn get_components_for_entity<'a>(
 #[derive(PhysicsLayer)]
 pub enum Layers {
     Player,
+    Fireball,
     Enemy,
     Level,
 }
