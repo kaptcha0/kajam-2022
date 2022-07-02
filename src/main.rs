@@ -23,7 +23,7 @@ fn main() {
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
-fn init() {
+pub fn init() {
     let height = 720.0;
     let mut app = App::new();
 
