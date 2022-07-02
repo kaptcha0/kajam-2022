@@ -3,7 +3,10 @@ use heron::prelude::*;
 use noise::NoiseFn;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::block_type::{BlockType, BLOCK_HEIGHT, BLOCK_SIZE};
+use crate::{
+    block_type::{BlockType, BLOCK_HEIGHT, BLOCK_SIZE},
+    utils::Layers,
+};
 
 pub const MAP_LEN: u32 = 500;
 pub struct TerrainPlugin;
@@ -65,8 +68,13 @@ fn generate_terrain(mut commands: Commands, mut terrain: ResMut<Terrain>) {
                 half_extends: Vec3::new(BLOCK_SIZE / 2.0, BLOCK_HEIGHT / 2.0, 0.0),
                 border_radius: None,
             })
-            .insert(CollisionLayers::default())
+            .insert(
+                CollisionLayers::none()
+                    .with_group(Layers::Level)
+                    .with_masks(&[Layers::Player, Layers::Enemy]),
+            )
             .id();
+
         terrain.0.push(entity)
     }
 
@@ -142,9 +150,9 @@ fn heightmap_to_blocks(heights: Vec<f32>) -> Vec<BlockType> {
             let prev = &heights[index - 1];
             let delta = height - prev;
 
-            if delta > 0.5 {
+            if delta > 0.3 {
                 return BlockType::Uphill;
-            } else if delta < -0.6 {
+            } else if delta < -0.4 {
                 return BlockType::Downhill;
             } else {
                 return BlockType::Flat;
