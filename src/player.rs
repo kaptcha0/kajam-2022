@@ -14,7 +14,6 @@ impl Plugin for PlayerPlugin {
         app.add_startup_system(spawn_player)
             .add_system(player_movement)
             .add_system(camera_follow)
-            .add_system(can_jump)
             .add_system(reset_player);
     }
 }
@@ -26,9 +25,10 @@ pub struct Limits {
 
 #[derive(Component, Inspectable)]
 pub struct Player {
-    speed: f32,
-    jump_height: f32,
-    jumped: bool,
+    pub speed: f32,
+    pub jump_height: f32,
+    pub jumped: bool,
+    pub peppers: u32,
 }
 
 fn spawn_player(mut commands: Commands) {
@@ -40,25 +40,25 @@ fn spawn_player(mut commands: Commands) {
         .insert(RigidBody::Dynamic)
         .insert(Velocity::from_linear(Vec3::X * 0.0))
         .insert(Acceleration::default())
-        .insert(CollisionShape::Cuboid {
-            half_extends: Vec3::splat(PLAYER_SIZE / 2.0),
-            border_radius: Some(0.015),
+        .insert(CollisionShape::Sphere {
+            radius: PLAYER_SIZE,
         })
         .insert(PhysicMaterial {
             restitution: 0.35,
-            friction: PLAYER_SIZE / 3.0,
+            friction: 0.0, //PLAYER_SIZE / 10.0,
             density: PLAYER_SIZE,
         })
         .insert(RotationConstraints::lock())
         .insert(
             CollisionLayers::none()
                 .with_group(Layers::Player)
-                .with_masks(&[Layers::Enemy, Layers::Level]),
+                .with_masks(&[Layers::Enemy, Layers::Level, Layers::Pepper]),
         )
         .insert(Player {
             speed: 100.0,
             jump_height: 1500.0,
             jumped: false,
+            peppers: 0,
         })
         .insert(Limits {
             max_velocity: Vec2::new(2000.0, 3000.0),
@@ -93,43 +93,6 @@ fn camera_follow(
 
     camera_transform.translation.x = player_transform.translation.x;
     camera_transform.translation.y = player_transform.translation.y;
-}
-
-fn can_jump(mut player_query: Query<&mut Player>, mut events: EventReader<CollisionEvent>) {
-    for event in events.iter() {
-        let (is_player, is_level) = collided_level(event.collision_layers());
-        let entities = event.rigid_body_entities();
-
-        let player = if is_player {
-            Some(entities.0)
-        } else if is_level {
-            Some(entities.1)
-        } else {
-            None
-        };
-
-        let contact = match event {
-            CollisionEvent::Started(_, _) => true,
-            CollisionEvent::Stopped(_, _) => false,
-        };
-
-        match player {
-            Some(_) => {
-                let mut player = player_query.single_mut();
-                player.jumped = !contact;
-            }
-            None => {}
-        };
-    }
-}
-
-fn collided_level(layers: (CollisionLayers, CollisionLayers)) -> (bool, bool) {
-    let (l1, l2) = layers;
-
-    let is_player = l1.contains_group(Layers::Player) && l2.contains_group(Layers::Level);
-    let is_level = l1.contains_group(Layers::Level) && l2.contains_group(Layers::Player);
-
-    (is_player, is_level)
 }
 
 fn player_movement(

@@ -131,7 +131,7 @@ fn spawn_fireballs(
             .insert(
                 CollisionLayers::none()
                     .with_group(Layers::Fireball)
-                    .with_masks(&[Layers::Player, Layers::Enemy]),
+                    .with_masks(&[Layers::Enemy]),
             )
             .insert(Fireball)
             .insert(Name::new("fireball"));

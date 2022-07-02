@@ -1873,6 +1873,7 @@ dependencies = [
  "console_error_panic_hook",
  "heron",
  "noise",
+ "rand 0.8.5",
  "wasm-bindgen",
  "wasm-bindgen-test",
  "wee_alloc",

@@ -1,6 +1,8 @@
+use kajam_lib::collisions::CollisionsPlugin;
 #[cfg(debug_assertions)]
 use kajam_lib::debug::DebugPlugin;
 
+use kajam_lib::pepper::PepperPlugin;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -50,7 +52,9 @@ fn init() {
     app.add_plugin(AssetsPlugin)
         .add_plugin(TerrainPlugin)
         .add_plugin(FireballPlugin)
-        .add_plugin(PlayerPlugin);
+        .add_plugin(PepperPlugin)
+        .add_plugin(PlayerPlugin)
+        .add_plugin(CollisionsPlugin);
 
     app.run();
 }

@@ -5,6 +5,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::{
     block_type::{BlockType, BLOCK_HEIGHT, BLOCK_SIZE},
+    player::PLAYER_SIZE,
     utils::Layers,
 };
 
@@ -68,10 +69,14 @@ fn generate_terrain(mut commands: Commands, mut terrain: ResMut<Terrain>) {
                 half_extends: Vec3::new(BLOCK_SIZE / 2.0, BLOCK_HEIGHT / 2.0, 0.0),
                 border_radius: None,
             })
+            .insert(PhysicMaterial {
+                friction: 2.0 * BLOCK_SIZE,
+                ..Default::default()
+            })
             .insert(
                 CollisionLayers::none()
                     .with_group(Layers::Level)
-                    .with_masks(&[Layers::Player, Layers::Enemy, Layers::Fireball]),
+                    .with_masks(&[Layers::Player, Layers::Enemy, Layers::Pepper]),
             )
             .id();
 
