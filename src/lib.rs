@@ -10,6 +10,7 @@ pub mod debug;
 
 pub mod assets;
 pub mod block_type;
+pub mod camera;
 pub mod collisions;
 pub mod fireball;
 pub mod health;

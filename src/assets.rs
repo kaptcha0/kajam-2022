@@ -9,8 +9,8 @@ impl Plugin for AssetsPlugin {
 }
 
 pub struct Fonts {
-    regular: Handle<Font>,
-    medium: Handle<Font>,
+    pub regular: Handle<Font>,
+    pub medium: Handle<Font>,
 }
 
 pub struct GameAssets {

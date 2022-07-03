@@ -1,4 +1,4 @@
-use crate::{block_type::BLOCK_SIZE, utils::Layers};
+use crate::{block_type::BLOCK_SIZE, camera::MainCamera, utils::Layers};
 
 use bevy::prelude::*;
 use bevy_inspector_egui::Inspectable;
@@ -86,7 +86,7 @@ fn load_player_sprite() -> impl Bundle {
 
 fn camera_follow(
     player_query: Query<&Transform, With<Player>>,
-    mut camera_query: Query<&mut Transform, (Without<Player>, With<Camera>)>,
+    mut camera_query: Query<&mut Transform, (Without<Player>, With<MainCamera>)>,
 ) {
     let player_transform = player_query.single();
     let mut camera_transform = camera_query.single_mut();

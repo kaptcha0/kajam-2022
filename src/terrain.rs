@@ -1,15 +1,15 @@
 use bevy::prelude::*;
 use heron::prelude::*;
 use noise::NoiseFn;
+use rand::Rng;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::{
     block_type::{BlockType, BLOCK_HEIGHT, BLOCK_SIZE},
-    player::PLAYER_SIZE,
     utils::Layers,
 };
 
-pub const MAP_LEN: u32 = 500;
+pub const MAP_LEN: u32 = 1000;
 pub struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
@@ -183,7 +183,14 @@ fn generate_heightmap(length: u32) -> Vec<f32> {
             (rand ^ (val as u128)) as f64,
         ]);
 
-        heights.push(height as f32);
+        heights.push(
+            (if rand::thread_rng().gen_bool(0.5) {
+                1.0
+            } else {
+                -1.0
+            }) * height as f32
+                + rand::random::<f32>(),
+        );
     }
 
     debug!("generatied terrain");

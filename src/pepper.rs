@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use heron::{CollisionLayers, CollisionShape, RigidBody, RotationConstraints, Velocity};
-use rand::{distributions::Uniform, prelude::Distribution, Rng};
+use rand::Rng;
 
 use crate::{
     assets::GameAssets, block_type::BLOCK_SIZE, player::PLAYER_SIZE, terrain::MAP_LEN,
@@ -22,17 +22,16 @@ pub struct Pepper {
 }
 
 fn spawn_peppers(mut commands: Commands, assets: Res<GameAssets>) {
-    let pepper_count = MAP_LEN / 5_u32;
-    let range = (
-        BLOCK_SIZE * 5.0,
-        (MAP_LEN as f32 * BLOCK_SIZE) - (BLOCK_SIZE * 5.0),
-    );
-    let dist = Uniform::from(range.0..range.1);
-
     let mut rng = rand::thread_rng();
+    let pepper_count = MAP_LEN / 10_u32;
+    let range = (
+        Vec2::splat(BLOCK_SIZE * 5.0),
+        Vec2::splat((MAP_LEN as f32 * BLOCK_SIZE) - (BLOCK_SIZE * 5.0)),
+    );
 
-    for _ in 0..pepper_count {
-        let x = dist.sample(&mut rng);
+    for i in 0..pepper_count {
+        let noise = rng.gen::<f32>() * 10.0;
+        let x = range.0.lerp(range.1, i as f32 / pepper_count as f32).x + (noise * BLOCK_SIZE);
 
         let loc = Vec3::new(x, 0.75, 800.0);
 

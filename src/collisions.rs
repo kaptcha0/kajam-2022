@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use heron::prelude::*;
 
-use crate::{player::Player, utils::Layers};
+use crate::{hud::UpdatePepperCountEvent, player::Player, utils::Layers};
 
 pub struct CollisionsPlugin;
 
@@ -15,6 +15,7 @@ fn collisions(
     mut commands: Commands,
     mut player_query: Query<&mut Player>,
     mut events: EventReader<CollisionEvent>,
+    mut ev_writer: EventWriter<UpdatePepperCountEvent>,
 ) {
     for event in events.iter() {
         let data = entities_from_event(event);
@@ -41,6 +42,10 @@ fn collisions(
                 match pepper {
                     Some(entity) => {
                         player.peppers += 1;
+                        ev_writer.send(UpdatePepperCountEvent {
+                            new_value: player.peppers,
+                        });
+
                         commands.entity(entity.0).despawn_recursive();
                     }
                     None => {}

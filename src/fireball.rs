@@ -3,6 +3,8 @@ use heron::{Acceleration, CollisionLayers, CollisionShape, RigidBody, Velocity};
 
 use crate::{
     assets::GameAssets,
+    camera::MainCamera,
+    hud::UpdatePepperCountEvent,
     player::{Player, PLAYER_SIZE},
     utils::Layers,
 };
@@ -12,6 +14,9 @@ pub struct FireballPlugin;
 impl Plugin for FireballPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<SpawnFireballEvent>()
+            .insert_resource(PepperTimer {
+                timer: Timer::from_seconds(1.0, true),
+            })
             .add_system(create_fireball)
             .add_system(spawn_fireballs)
             .add_system(despawn_fireball);
@@ -26,12 +31,19 @@ pub struct SpawnFireballEvent {
 #[derive(Component)]
 pub struct Fireball;
 
+/// Tracks how long a pepper has been used
+pub struct PepperTimer {
+    pub timer: Timer,
+}
+
 fn create_fireball(
     mouse: Res<Input<MouseButton>>,
     windows: Res<Windows>,
-    q_camera: Query<(&Camera, &GlobalTransform)>,
+    q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
     player_query: Query<&Transform, With<Player>>,
+    mut timer: ResMut<PepperTimer>,
     mut event_writer: EventWriter<SpawnFireballEvent>,
+    time: Res<Time>,
 ) {
     if mouse.pressed(MouseButton::Left) || mouse.just_pressed(MouseButton::Left) {
         let player = player_query.single();
@@ -42,6 +54,7 @@ fn create_fireball(
                 target: position.extend(900.0),
             };
 
+            timer.timer.tick(time.delta());
             event_writer.send(ev);
         }
     }
@@ -50,7 +63,7 @@ fn create_fireball(
 /// Translates mouse coordinates to world space
 fn get_world_coords(
     wnds: &Res<Windows>,
-    q_camera: &Query<(&Camera, &GlobalTransform)>,
+    q_camera: &Query<(&Camera, &GlobalTransform), With<MainCamera>>,
 ) -> Option<Vec2> {
     // get the camera info and transform
     // assuming there is exactly one main camera entity, so query::single() is OK
@@ -88,53 +101,67 @@ fn get_world_coords(
 
 fn spawn_fireballs(
     mut commands: Commands,
+    mut player_query: Query<&mut Player>,
     assets: Res<GameAssets>,
     mut events: EventReader<SpawnFireballEvent>,
+    mut update_text: EventWriter<UpdatePepperCountEvent>,
+    timer: ResMut<PepperTimer>,
 ) {
-    for ev in events.iter() {
-        let mut bundle = SpriteBundle {
-            sprite: Sprite {
-                custom_size: Some(Vec2::splat(PLAYER_SIZE * 2.0)),
+    let mut player = player_query.single_mut();
+
+    if timer.timer.just_finished() && player.peppers != 0 {
+        player.peppers -= 1;
+        update_text.send(UpdatePepperCountEvent {
+            new_value: player.peppers,
+        });
+    }
+
+    if timer.timer.times_finished() < player.peppers {
+        for ev in events.iter() {
+            let mut bundle = SpriteBundle {
+                sprite: Sprite {
+                    custom_size: Some(Vec2::splat(PLAYER_SIZE * 2.0)),
+                    ..Default::default()
+                },
+                texture: assets.fireball.clone_weak(),
+                transform: Transform {
+                    translation: ev.spawn_point,
+                    ..Default::default()
+                },
                 ..Default::default()
-            },
-            texture: assets.fireball.clone_weak(),
-            transform: Transform {
-                translation: ev.spawn_point,
-                ..Default::default()
-            },
-            ..Default::default()
-        };
+            };
 
-        let dist = ev
-            .target
-            .truncate()
-            .distance(bundle.transform.translation.truncate());
+            let dist = ev
+                .target
+                .truncate()
+                .distance(bundle.transform.translation.truncate());
 
-        let impulse = dist * 5.0;
-        let dy = ev.target.y - bundle.transform.translation.y;
-        let dx = ev.target.x - bundle.transform.translation.x;
-        let angle = f32::atan2(dy, dx);
+            let impulse = dist * 5.0;
+            let dy = ev.target.y - bundle.transform.translation.y;
+            let dx = ev.target.x - bundle.transform.translation.x;
+            let angle = f32::atan2(dy, dx);
 
-        bundle.transform.rotation = Quat::from_rotation_z(angle);
+            bundle.transform.rotation = Quat::from_rotation_z(angle);
 
-        let fireball_vec = Vec3::new(angle.cos() * impulse, angle.sin() * impulse, 900.0);
+            let fireball_vec = Vec3::new(angle.cos() * impulse, angle.sin() * impulse, 900.0);
 
-        commands
-            .spawn_bundle(bundle)
-            .insert(RigidBody::Dynamic)
-            .insert(Velocity::from_linear(fireball_vec))
-            .insert(Acceleration::default())
-            .insert(CollisionShape::Capsule {
-                half_segment: (PLAYER_SIZE),
-                radius: (PLAYER_SIZE * 2.0),
-            })
-            .insert(
-                CollisionLayers::none()
-                    .with_group(Layers::Fireball)
-                    .with_masks(&[Layers::Enemy]),
-            )
-            .insert(Fireball)
-            .insert(Name::new("fireball"));
+            commands
+                .spawn_bundle(bundle)
+                .insert(RigidBody::Dynamic)
+                .insert(Velocity::from_linear(fireball_vec))
+                .insert(Acceleration::default())
+                .insert(CollisionShape::Capsule {
+                    half_segment: (PLAYER_SIZE),
+                    radius: (PLAYER_SIZE * 2.0),
+                })
+                .insert(
+                    CollisionLayers::none()
+                        .with_group(Layers::Fireball)
+                        .with_masks(&[Layers::Enemy]),
+                )
+                .insert(Fireball)
+                .insert(Name::new("fireball"));
+        }
     }
 }
 
