@@ -27,7 +27,7 @@ pub fn get_components_for_entity<'a>(
     None
 }
 
-#[derive(PhysicsLayer, Clone, Copy, PartialEq, Eq)]
+#[derive(PhysicsLayer, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Layers {
     Player,
     Fireball,

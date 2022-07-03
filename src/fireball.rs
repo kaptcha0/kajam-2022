@@ -111,9 +111,7 @@ fn spawn_fireballs(
 
     if timer.timer.just_finished() && player.peppers != 0 {
         player.peppers -= 1;
-        update_text.send(UpdatePepperCountEvent {
-            new_value: player.peppers,
-        });
+        update_text.send(UpdatePepperCountEvent(player.peppers));
     }
 
     if timer.timer.times_finished() < player.peppers {

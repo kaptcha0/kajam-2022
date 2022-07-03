@@ -1,4 +1,4 @@
-use crate::{block_type::BLOCK_SIZE, camera::MainCamera, utils::Layers};
+use crate::{block_type::BLOCK_SIZE, camera::MainCamera, health::Health, utils::Layers};
 
 use bevy::prelude::*;
 use bevy_inspector_egui::Inspectable;
@@ -62,7 +62,8 @@ fn spawn_player(mut commands: Commands) {
         })
         .insert(Limits {
             max_velocity: Vec2::new(2000.0, 3000.0),
-        });
+        })
+        .insert(Health(500.0));
 }
 
 fn load_player_sprite() -> impl Bundle {

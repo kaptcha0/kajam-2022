@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use heron::prelude::*;
 
-use crate::{hud::UpdatePepperCountEvent, player::Player, utils::Layers};
+use crate::{health::DamageEvent, hud::UpdatePepperCountEvent, player::Player, utils::Layers};
 
 pub struct CollisionsPlugin;
 
@@ -15,7 +15,8 @@ fn collisions(
     mut commands: Commands,
     mut player_query: Query<&mut Player>,
     mut events: EventReader<CollisionEvent>,
-    mut ev_writer: EventWriter<UpdatePepperCountEvent>,
+    mut pepper_event: EventWriter<UpdatePepperCountEvent>,
+    mut damage_event: EventWriter<DamageEvent>,
 ) {
     for event in events.iter() {
         let data = entities_from_event(event);
@@ -27,10 +28,13 @@ fn collisions(
 
         let player = entities.iter().find(|item| item.1 == Layers::Player);
         let pepper = entities.iter().find(|item| item.1 == Layers::Pepper);
+        let fireball = entities.iter().find(|item| item.1 == Layers::Fireball);
+        let level = entities.iter().find(|item| item.1 == Layers::Level);
+        let enemy = entities.iter().find(|item| item.1 == Layers::Enemy);
 
         // Interactions with player
         match player {
-            Some(_) => {
+            Some((player_entity, _)) => {
                 let contact = match event {
                     CollisionEvent::Started(_, _) => true,
                     CollisionEvent::Stopped(_, _) => false,
@@ -42,17 +46,44 @@ fn collisions(
                 match pepper {
                     Some(entity) => {
                         player.peppers += 1;
-                        ev_writer.send(UpdatePepperCountEvent {
-                            new_value: player.peppers,
-                        });
+                        pepper_event.send(UpdatePepperCountEvent(player.peppers));
 
                         commands.entity(entity.0).despawn_recursive();
                     }
                     None => {}
                 }
+
+                match enemy {
+                    Some(_) => {
+                        for _ in 0..100 {
+                            damage_event.send(DamageEvent(*player_entity));
+                        }
+                    }
+                    None => {}
+                }
             }
             None => {}
+        };
+
+        match level {
+            Some(_) => match fireball {
+                Some((entity, _)) => commands.entity(*entity).despawn_recursive(),
+                None => {}
+            },
+            None => {}
         }
+
+        // Interactions with enemy
+        match enemy {
+            Some((entity, _)) => match fireball {
+                Some((fb, _)) => {
+                    damage_event.send(DamageEvent(*entity));
+                    commands.entity(*fb).despawn_recursive();
+                }
+                None => {}
+            },
+            None => {}
+        };
     }
 }
 
@@ -63,6 +94,7 @@ fn entities_from_event(ev: &CollisionEvent) -> Vec<(Entity, Layers)> {
 
     let queries = [
         (has_group(layers, Layers::Level), Layers::Level),
+        (has_group(layers, Layers::Fireball), Layers::Fireball),
         (has_group(layers, Layers::Enemy), Layers::Enemy),
         (has_group(layers, Layers::Pepper), Layers::Pepper),
         (has_group(layers, Layers::Player), Layers::Player),
